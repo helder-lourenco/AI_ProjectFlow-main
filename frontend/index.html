@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Gestão de Projetos</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <h2>Projetos AI</h2>
+        <nav>
+          <a href="#"><span class="material-icons">dashboard</span>Dashboard</a>
+          <a href="novo-projeto.html"
+            ><span class="material-icons">add_circle</span>Novo Projeto</a
+          >
+          <a href="#"><span class="material-icons">group</span>Equipe</a>
+          <a href="#"><span class="material-icons">logout</span>Logout</a>
+        </nav>
+      </aside>
+
+      <!-- Conteúdo Principal -->
+      <main class="main">
+        <header class="main-header">
+          <h1>Dashboard</h1>
+          <p>Resumo dos projetos em andamento</p>
+        </header>
+
+        <section class="cards">
+          <div class="card">
+            <h3>Projetos Ativos</h3>
+            <p>12</p>
+          </div>
+          <div class="card">
+            <h3>Alerta de Prazo</h3>
+            <p>3</p>
+          </div>
+          <div class="card">
+            <h3>Retorno Médio</h3>
+            <p>R$ 17.500</p>
+          </div>
+        </section>
+
+        <section class="charts">
+          <canvas id="evolucaoGrafico"></canvas>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="assets/js/charts.js"></script>
+  </body>
+</html>

@@ -120,3 +120,32 @@ body {
   font-size: 1em;
   cursor: pointer;
 }
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #1f1f2e;
+}
+
+.login-container form {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-container input {
+  margin: 10px 0;
+  padding: 10px;
+}
+
+.login-container button {
+  background-color: #1f1f2e;
+  color: white;
+  padding: 10px;
+  border: none;
+}

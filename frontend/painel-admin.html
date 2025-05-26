@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Painel Admin</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <style>
+      .top-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .top-actions button {
+        margin-left: 10px;
+        background-color: #1f1f2e;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 10%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        z-index: 999;
+        width: 400px;
+      }
+
+      .modal h3 {
+        margin-top: 0;
+      }
+
+      .modal input,
+      .modal select {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+
+      .modal button {
+        margin-top: 10px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #ccc;
+      }
+
+      .edit-icon {
+        cursor: pointer;
+        color: #007bff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <h2>Projetos AI</h2>
+        <nav>
+          <a href="index.html"
+            ><span class="material-icons">dashboard</span>Dashboard</a
+          >
+          <a href="novo-projeto.html"
+            ><span class="material-icons">add_circle</span>Novo Projeto</a
+          >
+          <a href="analista.html"
+            ><span class="material-icons">view_kanban</span>Quadro de
+            Projetos</a
+          >
+          <a href="acesso-sala.html"
+            ><span class="material-icons">meeting_room</span>Acesso à Sala</a
+          >
+          <a href="#" id="btnLogout"
+            ><span class="material-icons">logout</span>Logout</a
+          >
+        </nav>
+      </aside>
+
+      <!-- Conteúdo principal -->
+      <main class="main">
+        <div class="top-actions">
+          <h1>Gestão de Usuários</h1>
+          <div>
+            <button id="btnSolicitacoes">Solicitações Pendentes</button>
+            <button id="btnNovoUsuario">Adicionar Usuário</button>
+          </div>
+        </div>
+
+        <table id="usuariosTable">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Permissão</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </main>
+    </div>
+
+    <!-- Modal: Solicitações Pendentes -->
+    <div class="modal" id="modalSolicitacoes">
+      <h3>Solicitações Pendentes</h3>
+      <ul id="listaSolicitacoes"></ul>
+      <button
+        onclick="document.getElementById('modalSolicitacoes').style.display='none'"
+      >
+        Fechar
+      </button>
+    </div>
+
+    <!-- Modal: Novo Usuário -->
+    <div class="modal" id="modalNovoUsuario">
+      <h3>Adicionar Novo Usuário</h3>
+      <input type="email" id="novoEmail" placeholder="Email do usuário" />
+      <select id="novoRole">
+        <option value="dev">Dev</option>
+        <option value="po">PO</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button id="criarUsuario">Criar</button>
+      <button
+        onclick="document.getElementById('modalNovoUsuario').style.display='none'"
+      >
+        Cancelar
+      </button>
+    </div>
+
+    <!-- Modal: Editar Usuário -->
+    <div class="modal" id="modalEditarUsuario">
+      <h3>Editar Usuário</h3>
+      <input type="email" id="editEmail" disabled />
+      <select id="editRole">
+        <option value="dev">Dev</option>
+        <option value="po">PO</option>
+        <option value="admin">Admin</option>
+      </select>
+      <select id="editStatus">
+        <option value="pendente">Pendente</option>
+        <option value="ativo">Ativo</option>
+        <option value="bloqueado">Bloqueado</option>
+      </select>
+      <button id="salvarEdicao">Salvar</button>
+      <button
+        onclick="document.getElementById('modalEditarUsuario').style.display='none'"
+      >
+        Cancelar
+      </button>
+    </div>
+
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      import { SUPABASE_URL, SUPABASE_KEY } from "./assets/js/env.js";
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) window.location.href = "login.html";
+
+      const { data: perfil } = await supabase
+        .from("usuarios")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      if (!perfil || perfil.role !== "admin") {
+        alert("Acesso restrito.");
+        window.location.href = "index.html";
+      }
+
+      const tableBody = document.querySelector("#usuariosTable tbody");
+      let usuarios = [];
+
+      async function carregarUsuarios() {
+        const { data } = await supabase
+          .from("usuarios")
+          .select("*")
+          .order("criado_em", { ascending: true });
+        usuarios = data || [];
+        tableBody.innerHTML = "";
+        usuarios.forEach((u) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+          <td>${u.email}</td>
+          <td>${u.status}</td>
+          <td>${u.role}</td>
+          <td><span class="material-icons edit-icon" data-email="${u.email}">edit</span></td>
+        `;
+          tableBody.appendChild(tr);
+        });
+      }
+
+      await carregarUsuarios();
+
+      // Modal de Solicitações Pendentes
+      document
+        .getElementById("btnSolicitacoes")
+        .addEventListener("click", async () => {
+          const { data: pendentes } = await supabase
+            .from("usuarios")
+            .select("*")
+            .eq("status", "pendente");
+          const lista = document.getElementById("listaSolicitacoes");
+          lista.innerHTML = pendentes.length
+            ? ""
+            : "<li>Nenhuma solicitação pendente.</li>";
+
+          pendentes.forEach((u) => {
+            const li = document.createElement("li");
+            li.textContent = `${u.email} — ${u.role || "sem perfil"}`;
+            lista.appendChild(li);
+          });
+
+          document.getElementById("modalSolicitacoes").style.display = "block";
+        });
+
+      // Modal de Novo Usuário
+      document
+        .getElementById("btnNovoUsuario")
+        .addEventListener("click", () => {
+          document.getElementById("modalNovoUsuario").style.display = "block";
+        });
+
+      document
+        .getElementById("criarUsuario")
+        .addEventListener("click", async () => {
+          const email = document.getElementById("novoEmail").value;
+          const role = document.getElementById("novoRole").value;
+
+          if (!email) return alert("Email é obrigatório.");
+
+          const { error } = await supabase
+            .from("usuarios")
+            .insert([{ email, role, status: "ativo" }]);
+          if (error) return alert("Erro ao criar usuário");
+
+          document.getElementById("modalNovoUsuario").style.display = "none";
+          await carregarUsuarios();
+        });
+
+      // Modal de Editar Usuário
+      document.addEventListener("click", (e) => {
+        if (e.target.classList.contains("edit-icon")) {
+          const email = e.target.getAttribute("data-email");
+          const usuario = usuarios.find((u) => u.email === email);
+          document.getElementById("editEmail").value = usuario.email;
+          document.getElementById("editRole").value = usuario.role;
+          document.getElementById("editStatus").value = usuario.status;
+          document.getElementById("modalEditarUsuario").style.display = "block";
+        }
+      });
+
+      document
+        .getElementById("salvarEdicao")
+        .addEventListener("click", async () => {
+          const email = document.getElementById("editEmail").value;
+          const role = document.getElementById("editRole").value;
+          const status = document.getElementById("editStatus").value;
+
+          const { error } = await supabase
+            .from("usuarios")
+            .update({ role, status })
+            .eq("email", email);
+
+          if (error) return alert("Erro ao salvar alterações.");
+
+          document.getElementById("modalEditarUsuario").style.display = "none";
+          await carregarUsuarios();
+        });
+
+      // Logout
+      document
+        .getElementById("btnLogout")
+        .addEventListener("click", async () => {
+          await supabase.auth.signOut();
+          window.location.href = "login.html";
+        });
+    </script>
+  </body>
+</html>

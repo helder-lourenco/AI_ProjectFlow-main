@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acesso</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <script type="module">
+      import { checkAuth } from "./assets/js/auth.js";
+      checkAuth();
+    </script>
+  </head>
+  <body>
+    <div class="login-container">
+      <form id="acesso-form">
+        <h2>Nova Conta</h2>
+        <input type="email" id="new-email" placeholder="Email" required />
+        <input type="password" id="new-password" placeholder="Senha" required />
+        <button type="submit">Criar Conta</button>
+      </form>
+
+      <form id="reset-form" style="margin-top: 20px">
+        <h2>Resetar Senha</h2>
+        <input type="email" id="reset-email" placeholder="Email" required />
+        <button type="submit">Enviar Link de Reset</button>
+      </form>
+    </div>
+
+    <script type="module">
+      document
+        .getElementById("acesso-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("new-email").value;
+          const password = document.getElementById("new-password").value;
+
+          const { error } = await supabase.auth.signUp({ email, password });
+          if (error) alert("Erro: " + error.message);
+          else alert("Conta criada! Verifique seu e-mail.");
+        });
+
+      document
+        .getElementById("reset-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("reset-email").value;
+
+          const { error } = await supabase.auth.resetPasswordForEmail(email);
+          if (error) alert("Erro: " + error.message);
+          else alert("Link de redefinição enviado!");
+        });
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (!error) {
+        await supabase.from("usuarios").insert([{ id: data.user.id, email }]);
+      }
+    </script>
+    <script type="module">
+      import { supabase } from "./assets/js/auth.js";
+
+      document
+        .getElementById("btnLogout")
+        ?.addEventListener("click", async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          localStorage.removeItem("user");
+          window.location.href = "login.html";
+        });
+    </script>
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      import { SUPABASE_URL, SUPABASE_KEY } from "./assets/js/env.js";
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    </script>
+  </body>
+</html>

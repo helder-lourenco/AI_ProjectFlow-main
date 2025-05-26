@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: "Inter", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #1f1f2e, #4b4b8f);
+        color: white;
+      }
+
+      .login-box {
+        background: white;
+        color: #333;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        max-width: 400px;
+        width: 100%;
+        text-align: center;
+      }
+
+      .login-box img.logo {
+        width: 240px;
+      }
+
+      .login-box h2 {
+        margin-bottom: 35px;
+        font-weight: 600;
+        margin-top: 0;
+      }
+
+      .login-box input {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+      }
+
+      .login-box button {
+        background-color: #1f1f2e;
+        color: white;
+        padding: 12px;
+        width: 100%;
+        border: none;
+        border-radius: 8px;
+        font-size: 1em;
+        cursor: pointer;
+        margin-top: 15px;
+      }
+
+      .login-box .access-request {
+        margin-top: 20px;
+        font-size: 0.9em;
+        color: #666;
+      }
+
+      .login-box .access-request a {
+        color: #1f1f2e;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-box">
+      <!-- Substitua logo.png pela sua logo -->
+      <img src="assets/img/logo.jpg" alt="Logo da Empresa" class="logo" />
+
+      <h2>Login no Sistema</h2>
+      <form id="form-login">
+        <input type="email" id="email" placeholder="Seu e-mail" required />
+        <input type="password" id="senha" placeholder="Sua senha" required />
+        <button type="submit">Entrar</button>
+      </form>
+
+      <div class="access-request">
+        Não tem acesso? <a id="solicitarAcesso">Solicitar Acesso</a>
+      </div>
+    </div>
+
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      import { SUPABASE_URL, SUPABASE_KEY } from "./assets/js/env.js";
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+      const formLogin = document.getElementById("form-login");
+
+      formLogin.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById("email").value;
+        const senha = document.getElementById("senha").value;
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password: senha,
+        });
+
+        if (error) {
+          alert("Email ou senha inválidos.");
+          return;
+        }
+
+        const { user } = data;
+
+        // Valida status
+        const { data: perfil } = await supabase
+          .from("usuarios")
+          .select("role, status")
+          .eq("id", user.id)
+          .single();
+
+        if (!perfil || perfil.status !== "Ativo") {
+          alert("Seu acesso está pendente ou inativo.");
+          await supabase.auth.signOut();
+          return;
+        }
+
+        // Redireciona por perfil
+        if (perfil.role === "admin") {
+          window.location.href = "index.html";
+        } else {
+          window.location.href = "analista.html";
+        }
+      });
+    </script>
+  </body>
+</html>

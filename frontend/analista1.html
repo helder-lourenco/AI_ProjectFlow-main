@@ -1,0 +1,85 @@
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+  import { SUPABASE_URL, SUPABASE_KEY } from "./assets/js/env.js";
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    alert("Sessão expirada. Faça login novamente.");
+    window.location.href = "login.html";
+  }
+
+  const userId = session.user.id;
+  const { data: userData } = await supabase
+    .from("usuarios")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  const role = userData?.role;
+
+  // Oculta botão de novo projeto se não for admin ou po
+  const btnNovoProjeto = document.querySelector(
+    '[data-bs-target="#modalNovoProjeto"]'
+  );
+  if (role !== "admin" && role !== "po") {
+    btnNovoProjeto?.classList.add("d-none");
+  }
+
+  // Mapeia status para coluna
+  const mapStatusToColId = {
+    requisitos: "requisitos-col",
+    backlog: "backlog-col",
+    em_progresso: "progresso-col",
+    validacao: "validacao-col",
+    concluido: "concluido-col",
+  };
+
+  // Busca projetos no Supabase
+  const { data: projetos, error } = await supabase.from("projetos").select("*");
+
+  if (error) {
+    console.error("Erro ao carregar projetos:", error);
+  }
+
+  projetos.forEach((proj) => {
+    const colId = mapStatusToColId[proj.status];
+    const coluna = document.getElementById(colId);
+    if (!coluna) return;
+
+    const card = document.createElement("div");
+    card.className = "kanban-card";
+    card.setAttribute("data-col", proj.status);
+    card.setAttribute("data-titulo", proj.titulo);
+    card.setAttribute("data-descricao", proj.descricao);
+    card.setAttribute("data-prazo", proj.prazo);
+    card.setAttribute("data-valor", proj.valor_est);
+    card.setAttribute("data-metodologias", proj.metodologias);
+    card.setAttribute("draggable", "true");
+
+    card.innerHTML = `
+      <div class="deadline-alert d-none"></div>
+      <div class="card-content">
+        <strong>${proj.titulo}</strong>
+        <p>${proj.descricao}</p>
+        ${
+          proj.metodologias
+            ? `<span class="badge bg-secondary">${proj.metodologias}</span>`
+            : ""
+        }
+      </div>
+    `;
+
+    coluna.appendChild(card);
+  });
+
+  // Logout
+  document.getElementById("btnLogout")?.addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.location.href = "login.html";
+  });
+</script>

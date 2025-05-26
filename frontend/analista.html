@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quadro de Projetos</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <style>
+      body {
+        background: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
+        min-height: 100vh;
+      }
+      .kanban-board {
+        display: flex;
+        gap: 1.5rem;
+        overflow-x: auto;
+        padding-bottom: 2rem;
+      }
+      .kanban-column {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 12px;
+        min-width: 320px;
+        max-width: 350px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 1rem;
+        flex: 1 0 320px;
+        display: flex;
+        flex-direction: column;
+        height: 80vh;
+      }
+      .kanban-column h5 {
+        font-weight: 700;
+        margin-bottom: 1rem;
+      }
+      .kanban-card {
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+        padding: 1rem 1rem 1rem 0.75rem;
+        margin-bottom: 1rem;
+        border-left: 5px solid transparent;
+        background: #fffbe6; /* amarelo padrão para backlog */
+        cursor: grab;
+        display: flex;
+        align-items: stretch;
+        transition: background 0.2s;
+      }
+      .kanban-card[data-col="backlog"] {
+        background: #fffbe6;
+      } /* amarelo */
+      .kanban-card[data-col="progresso"] {
+        background: #e7f1ff;
+      } /* azul */
+      .kanban-card[data-col="concluido"] {
+        background: #e6ffed;
+      } /* verde */
+      .kanban-card .deadline-alert {
+        width: 6px;
+        border-radius: 4px;
+        background: #e53935;
+        margin-right: 10px;
+        flex-shrink: 0;
+      }
+      .kanban-card .card-content {
+        flex: 1;
+      }
+      .kanban-card:last-child {
+        margin-bottom: 0;
+      }
+      .kanban-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        margin-top: 0.5rem;
+      }
+      .user-info img {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #6f42c1;
+      }
+      .btn-add {
+        background: #6f42c1;
+        color: #fff;
+      }
+      .btn-add:hover {
+        background: #563d7c;
+        color: #fff;
+      }
+      .kanban-card.dragging {
+        opacity: 0.5;
+      }
+      .kanban-column.drag-over {
+        outline: 2px dashed #6f42c1;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      import { SUPABASE_URL, SUPABASE_KEY } from "./assets/js/env.js";
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // Verifica se está logado e se tem permissão (admin, dev ou po)
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        alert("Sessão expirada. Faça login novamente.");
+        window.location.href = "login.html";
+      }
+
+      const { data: userData } = await supabase
+        .from("usuarios")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+
+      const role = userData?.role;
+
+      if (!["admin", "dev", "po"].includes(role)) {
+        alert(
+          "Acesso negado. Você não tem permissão para acessar esta página."
+        );
+        window.location.href = "index.html";
+      }
+
+      // Logout
+      document
+        .getElementById("btnLogout")
+        ?.addEventListener("click", async () => {
+          await supabase.auth.signOut();
+          window.location.href = "login.html";
+        });
+    </script>
+
+    <div class="container-fluid py-4">
+      <div class="kanban-header">
+        <h2>Quadro de Projetos</h2>
+        <div>
+          <button class="btn btn-success me-2" id="btnGraficos">
+            <span class="material-icons align-middle">bar_chart</span> Gráficos
+          </button>
+          <button class="btn btn-secondary me-2" id="btnPlanilha">
+            <span class="material-icons align-middle">table_view</span> Planilha
+          </button>
+          <button
+            class="btn btn-add"
+            data-bs-toggle="modal"
+            data-bs-target="#modalNovoProjeto"
+          >
+            <span class="material-icons align-middle">add_circle</span> Novo
+            Projeto
+          </button>
+        </div>
+      </div>
+      <!-- User Info -->
+      <div class="user-info">
+        <img
+          src="https://randomuser.me/api/portraits/men/32.jpg"
+          alt="Usuário"
+        />
+        <div>
+          <div><strong>João Silva</strong></div>
+          <div class="text-muted">Analista de Projetos</div>
+        </div>
+      </div>
+      <div class="kanban-board">
+        <div class="kanban-column" id="backlog-col" data-col="backlog">
+          <h5>Backlog</h5>
+          <div
+            class="kanban-card"
+            data-col="backlog"
+            data-bs-toggle="modal"
+            data-bs-target="#modalEditarProjeto"
+            data-titulo="Projeto 1"
+            data-descricao="Descrição do projeto em backlog."
+            data-prazo="2024-06-01"
+            data-valor="1000"
+            data-metodologias="5W2H"
+            draggable="true"
+          >
+            <div class="deadline-alert d-none"></div>
+            <div class="card-content">
+              <strong>Projeto 1</strong>
+              <p>Descrição do projeto em backlog.</p>
+              <span class="badge bg-secondary">5W2H</span>
+            </div>
+          </div>
+        </div>
+        <div class="kanban-column" id="progresso-col" data-col="progresso">
+          <h5>Em Progresso</h5>
+          <div
+            class="kanban-card"
+            data-col="progresso"
+            data-bs-toggle="modal"
+            data-bs-target="#modalEditarProjeto"
+            data-titulo="Projeto 2"
+            data-descricao="Descrição do projeto em andamento."
+            data-prazo="2024-05-30"
+            data-valor="2000"
+            data-metodologias="80/20"
+            draggable="true"
+          >
+            <div class="deadline-alert d-none"></div>
+            <div class="card-content">
+              <strong>Projeto 2</strong>
+              <p>Descrição do projeto em andamento.</p>
+              <span class="badge bg-info">80/20</span>
+            </div>
+          </div>
+        </div>
+        <div class="kanban-column" id="concluido-col" data-col="concluido">
+          <h5>Concluído</h5>
+          <div
+            class="kanban-card"
+            data-col="concluido"
+            data-bs-toggle="modal"
+            data-bs-target="#modalEditarProjeto"
+            data-titulo="Projeto 3"
+            data-descricao="Projeto finalizado com sucesso."
+            data-prazo="2024-05-20"
+            data-valor="3000"
+            data-metodologias="PMO"
+            draggable="true"
+          >
+            <div class="deadline-alert d-none"></div>
+            <div class="card-content">
+              <strong>Projeto 3</strong>
+              <p>Projeto finalizado com sucesso.</p>
+              <span class="badge bg-success">PMO</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Novo Projeto -->
+    <div
+      class="modal fade"
+      id="modalNovoProjeto"
+      tabindex="-1"
+      aria-labelledby="modalNovoProjetoLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form id="form-projeto">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalNovoProjetoLabel">
+                Novo Projeto
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Fechar"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <!-- Seu formulário de novo projeto aqui (igual ao já existente) -->
+              <div class="mb-3">
+                <label for="titulo" class="form-label">Título do Projeto</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="titulo"
+                  name="titulo"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="descricao" class="form-label">Descrição</label>
+                <textarea
+                  class="form-control"
+                  id="descricao"
+                  name="descricao"
+                  rows="3"
+                  required
+                ></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="prazo" class="form-label">Prazo de Entrega</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  id="prazo"
+                  name="prazo"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="valorEstimado" class="form-label"
+                  >Valor Estimado (R$)</label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  id="valorEstimado"
+                  name="valorEstimado"
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Metodologias e Frameworks</label>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="metodologias"
+                    value="5W2H"
+                    id="met5w2h"
+                  />
+                  <label class="form-check-label" for="met5w2h">5W2H</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="metodologias"
+                    value="80/20"
+                    id="met8020"
+                  />
+                  <label class="form-check-label" for="met8020">80/20</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="metodologias"
+                    value="Chicago UI"
+                    id="metchicago"
+                  />
+                  <label class="form-check-label" for="metchicago"
+                    >Chicago UI</label
+                  >
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="metodologias"
+                    value="PMO"
+                    id="metpmo"
+                  />
+                  <label class="form-check-label" for="metpmo">PMO</label>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Criar Projeto
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Editar Projeto -->
+    <div
+      class="modal fade"
+      id="modalEditarProjeto"
+      tabindex="-1"
+      aria-labelledby="modalEditarProjetoLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form id="form-editar-projeto">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalEditarProjetoLabel">
+                Editar Projeto
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Fechar"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="edit-titulo" class="form-label"
+                  >Título do Projeto</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit-titulo"
+                  name="titulo"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="edit-descricao" class="form-label">Descrição</label>
+                <textarea
+                  class="form-control"
+                  id="edit-descricao"
+                  name="descricao"
+                  rows="3"
+                  required
+                ></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="edit-prazo" class="form-label"
+                  >Prazo de Entrega</label
+                >
+                <input
+                  type="date"
+                  class="form-control"
+                  id="edit-prazo"
+                  name="prazo"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="edit-valorEstimado" class="form-label"
+                  >Valor Estimado (R$)</label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  id="edit-valorEstimado"
+                  name="valorEstimado"
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Metodologias e Frameworks</label>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="metodologias"
+                    value="5W2H"
+                    id="edit-met5w2h"
+                  />
+                  <label class="form-check-label" for="edit-met5w2h"
+                    >5W2H</label
+                  >
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="metodologias"
+                    value="80/20"
+                    id="edit-met8020"
+                  />
+                  <label class="form-check-label" for="edit-met8020"
+                    >80/20</label
+                  >
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="metodologias"
+                    value="Chicago UI"
+                    id="edit-metchicago"
+                  />
+                  <label class="form-check-label" for="edit-metchicago"
+                    >Chicago UI</label
+                  >
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="metodologias"
+                    value="PMO"
+                    id="edit-metpmo"
+                  />
+                  <label class="form-check-label" for="edit-metpmo">PMO</label>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Salvar Alterações
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Gráficos -->
+    <div
+      class="modal fade"
+      id="modalGraficos"
+      tabindex="-1"
+      aria-labelledby="modalGraficosLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl" style="max-width: 90vw">
+        <div class="modal-content" style="height: 90vh">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalGraficosLabel">
+              Painel de Tarefas da Equipe
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Fechar"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="row h-100">
+              <div class="col-md-4 d-flex flex-column justify-content-between">
+                <div>
+                  <h6>Status das tarefas</h6>
+                  <canvas id="graficoPizza"></canvas>
+                </div>
+                <div>
+                  <h6>Progresso geral</h6>
+                  <canvas id="graficoBarra"></canvas>
+                </div>
+              </div>
+              <div class="col-md-8">
+                <div>
+                  <h6>Disponibilidade</h6>
+                  <canvas id="graficoDisponibilidade"></canvas>
+                </div>
+                <div class="mt-4">
+                  <h6>Gantt (Projetos x Prazo)</h6>
+                  <canvas id="graficoGantt"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Planilha -->
+    <div
+      class="modal fade"
+      id="modalPlanilha"
+      tabindex="-1"
+      aria-labelledby="modalPlanilhaLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl" style="max-width: 90vw">
+        <div class="modal-content" style="height: 90vh">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalPlanilhaLabel">
+              Projetos Cancelados/Bloqueados/Pausados
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Fechar"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="table-responsive" style="max-height: 70vh">
+              <table
+                class="table table-bordered table-striped table-hover align-middle"
+              >
+                <thead class="table-dark">
+                  <tr>
+                    <th>Projeto</th>
+                    <th>Status</th>
+                    <th>Motivo</th>
+                    <th>Responsável</th>
+                    <th>Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Projeto X</td>
+                    <td>Cancelado</td>
+                    <td>Orçamento</td>
+                    <td>Maria</td>
+                    <td>2024-05-10</td>
+                  </tr>
+                  <tr>
+                    <td>Projeto Y</td>
+                    <td>Bloqueado</td>
+                    <td>Dependência externa</td>
+                    <td>João</td>
+                    <td>2024-05-15</td>
+                  </tr>
+                  <tr>
+                    <td>Projeto Z</td>
+                    <td>Pausado</td>
+                    <td>Prioridade alterada</td>
+                    <td>Lucas</td>
+                    <td>2024-05-20</td>
+                  </tr>
+                  <!-- Adicione mais linhas conforme necessário -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- <script type="module">
+      // Função para verificar e exibir a linha vermelha de deadline
+      function updateDeadlineAlerts() {
+        const cards = document.querySelectorAll(".kanban-card");
+        const now = new Date();
+        cards.forEach((card) => {
+          const prazo = card.dataset.prazo;
+          const alertDiv = card.querySelector(".deadline-alert");
+          if (prazo) {
+            const prazoDate = new Date(prazo);
+            const diff = (prazoDate - now) / (1000 * 60 * 60 * 24);
+            if (diff <= 5) {
+              alertDiv.classList.remove("d-none");
+            } else {
+              alertDiv.classList.add("d-none");
+            }
+          } else {
+            alertDiv.classList.add("d-none");
+          }
+        });
+      }
+      updateDeadlineAlerts();
+
+      // Preencher modal de edição ao clicar no card
+      document.querySelectorAll(".kanban-card").forEach((card) => {
+        card.addEventListener("click", function () {
+          document.getElementById("edit-titulo").value =
+            card.dataset.titulo || "";
+          document.getElementById("edit-descricao").value =
+            card.dataset.descricao || "";
+          document.getElementById("edit-prazo").value =
+            card.dataset.prazo || "";
+          document.getElementById("edit-valorEstimado").value =
+            card.dataset.valor || "";
+          // Limpa todos os checkboxes
+          document
+            .querySelectorAll('#modalEditarProjeto input[name="metodologias"]')
+            .forEach((cb) => (cb.checked = false));
+          // Marca os checkboxes conforme as metodologias do card
+          if (card.dataset.metodologias) {
+            card.dataset.metodologias.split(",").forEach((met) => {
+              const cb = document.querySelector(
+                `#modalEditarProjeto input[value="${met.trim()}"]`
+              );
+              if (cb) cb.checked = true;
+            });
+          }
+        });
+      });
+
+      // Drag & Drop para transferir cards entre colunas
+      let draggedCard = null;
+      document.querySelectorAll(".kanban-card").forEach((card) => {
+        card.addEventListener("dragstart", (e) => {
+          draggedCard = card;
+          setTimeout(() => card.classList.add("dragging"), 0);
+        });
+        card.addEventListener("dragend", (e) => {
+          card.classList.remove("dragging");
+          draggedCard = null;
+        });
+      });
+      document.querySelectorAll(".kanban-column").forEach((col) => {
+        col.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          col.classList.add("drag-over");
+        });
+        col.addEventListener("dragleave", (e) => {
+          col.classList.remove("drag-over");
+        });
+        col.addEventListener("drop", (e) => {
+          col.classList.remove("drag-over");
+          if (draggedCard) {
+            col.appendChild(draggedCard);
+            // Atualiza cor do card conforme coluna
+            draggedCard.dataset.col = col.dataset.col;
+            // Atualiza cor de fundo
+            if (col.dataset.col === "backlog") {
+              draggedCard.style.background = "#fffbe6";
+            } else if (col.dataset.col === "progresso") {
+              draggedCard.style.background = "#e7f1ff";
+            } else if (col.dataset.col === "concluido") {
+              draggedCard.style.background = "#e6ffed";
+            }
+            updateDeadlineAlerts();
+          }
+        });
+      });
+
+      // Atualiza deadline alerts ao mover cards
+      document.querySelectorAll(".kanban-card").forEach((card) => {
+        card.addEventListener("drop", updateDeadlineAlerts);
+      });
+
+      // Abrir modais
+      document.getElementById("btnGraficos").onclick = () => {
+        const modal = new bootstrap.Modal(
+          document.getElementById("modalGraficos")
+        );
+        modal.show();
+        setTimeout(renderGraficos, 300); // Garante que o modal abriu antes de renderizar
+      };
+      document.getElementById("btnPlanilha").onclick = () => {
+        const modal = new bootstrap.Modal(
+          document.getElementById("modalPlanilha")
+        );
+        modal.show();
+      };
+
+      // Gráficos Chart.js
+      function renderGraficos() {
+        // Pizza
+        new Chart(document.getElementById("graficoPizza"), {
+          type: "doughnut",
+          data: {
+            labels: ["Feita", "Em andamento", "Parada"],
+            datasets: [
+              {
+                data: [8, 5, 2],
+                backgroundColor: ["#43d391", "#ffd600", "#ff5c5c"],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { position: "bottom" } },
+          },
+        });
+        // Barra (progresso geral)
+        new Chart(document.getElementById("graficoBarra"), {
+          type: "bar",
+          data: {
+            labels: ["Feita", "Em andamento", "Parada"],
+            datasets: [
+              {
+                label: "Tarefas",
+                data: [8, 5, 2],
+                backgroundColor: ["#43d391", "#ffd600", "#ff5c5c"],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+          },
+        });
+        // Disponibilidade (stacked bar)
+        new Chart(document.getElementById("graficoDisponibilidade"), {
+          type: "bar",
+          data: {
+            labels: ["João", "Maria", "Lucas", "Ana", "Pedro"],
+            datasets: [
+              {
+                label: "Feita",
+                data: [2, 2, 1, 2, 1],
+                backgroundColor: "#43d391",
+              },
+              {
+                label: "Em andamento",
+                data: [1, 1, 2, 1, 1],
+                backgroundColor: "#ffd600",
+              },
+              {
+                label: "Parada",
+                data: [0, 1, 0, 0, 1],
+                backgroundColor: "#ff5c5c",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { position: "bottom" } },
+            scales: { x: { stacked: true }, y: { stacked: true } },
+          },
+        });
+        // Gantt (usando horizontal bar)
+        new Chart(document.getElementById("graficoGantt"), {
+          type: "bar",
+          data: {
+            labels: ["Projeto 1", "Projeto 2", "Projeto 3", "Projeto 4"],
+            datasets: [
+              {
+                label: "Duração",
+                data: [10, 7, 5, 8],
+                backgroundColor: ["#43d391", "#ffd600", "#ffd600", "#ff5c5c"],
+                borderRadius: 8,
+              },
+            ],
+          },
+          options: {
+            indexAxis: "y",
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true } },
+          },
+        });
+      }
+    </script>
+    -->
+
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      import { SUPABASE_URL, SUPABASE_KEY } from "./assets/js/env.js";
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        alert("Sessão expirada. Faça login novamente.");
+        window.location.href = "login.html";
+      }
+
+      const userId = session.user.id;
+      const { data: userData } = await supabase
+        .from("usuarios")
+        .select("role")
+        .eq("id", userId)
+        .single();
+
+      const role = userData?.role;
+
+      // Oculta botão de novo projeto se não for admin ou po
+      const btnNovoProjeto = document.querySelector(
+        '[data-bs-target="#modalNovoProjeto"]'
+      );
+      if (role !== "admin" && role !== "po") {
+        btnNovoProjeto?.classList.add("d-none");
+      }
+
+      // Mapeia status para coluna
+      const mapStatusToColId = {
+        requisitos: "requisitos-col",
+        backlog: "backlog-col",
+        em_progresso: "progresso-col",
+        validacao: "validacao-col",
+        concluido: "concluido-col",
+      };
+
+      // Busca projetos no Supabase
+      const { data: projetos, error } = await supabase
+        .from("projetos")
+        .select("*");
+
+      if (error) {
+        console.error("Erro ao carregar projetos:", error);
+      }
+
+      projetos.forEach((proj) => {
+        const colId = mapStatusToColId[proj.status];
+        const coluna = document.getElementById(colId);
+        if (!coluna) return;
+
+        const card = document.createElement("div");
+        card.className = "kanban-card";
+        card.setAttribute("data-col", proj.status);
+        card.setAttribute("data-titulo", proj.titulo);
+        card.setAttribute("data-descricao", proj.descricao);
+        card.setAttribute("data-prazo", proj.prazo);
+        card.setAttribute("data-valor", proj.valor_est);
+        card.setAttribute("data-metodologias", proj.metodologias);
+        card.setAttribute("draggable", "true");
+
+        card.innerHTML = `
+      <div class="deadline-alert d-none"></div>
+      <div class="card-content">
+        <strong>${proj.titulo}</strong>
+        <p>${proj.descricao}</p>
+        ${
+          proj.metodologias
+            ? `<span class="badge bg-secondary">${proj.metodologias}</span>`
+            : ""
+        }
+      </div>
+    `;
+
+        coluna.appendChild(card);
+      });
+
+      // Logout
+      document
+        .getElementById("btnLogout")
+        ?.addEventListener("click", async () => {
+          await supabase.auth.signOut();
+          window.location.href = "login.html";
+        });
+    </script>
+  </body>
+</html>

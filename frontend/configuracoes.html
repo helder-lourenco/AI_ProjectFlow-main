@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Configurações do Sistema</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <style>
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 1em;
+      }
+      .form-actions {
+        margin-top: 20px;
+      }
+      .form-actions button {
+        padding: 10px 20px;
+        background-color: #1f1f2e;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <aside class="sidebar">
+        <h2>Projetos AI</h2>
+        <nav>
+          <a href="index.html"
+            ><span class="material-icons">dashboard</span>Dashboard</a
+          >
+          <a href="novo-projeto.html"
+            ><span class="material-icons">add_circle</span>Novo Projeto</a
+          >
+          <a href="painel-admin.html"
+            ><span class="material-icons">admin_panel_settings</span>Painel
+            Admin</a
+          >
+          <a href="configuracoes.html"
+            ><span class="material-icons">settings</span>Configurações</a
+          >
+          <a href="#" id="btnLogout"
+            ><span class="material-icons">logout</span>Logout</a
+          >
+        </nav>
+      </aside>
+
+      <main class="main">
+        <h1>Configurações da Plataforma</h1>
+        <form id="form-config">
+          <div class="form-group">
+            <label for="corPrimaria">Cor Primária do Sistema</label>
+            <input type="color" id="corPrimaria" name="corPrimaria" />
+          </div>
+
+          <div class="form-group">
+            <label for="logoUpload">Logo da Empresa</label>
+            <input type="file" id="logoUpload" accept="image/*" />
+          </div>
+
+          <div class="form-group">
+            <label for="custoHora">Custo Médio Hora (R$)</label>
+            <input type="number" id="custoHora" step="0.01" />
+          </div>
+
+          <div class="form-group">
+            <label for="promptPadrao">Prompt Padrão da IA</label>
+            <textarea
+              id="promptPadrao"
+              rows="5"
+              placeholder="Digite aqui o prompt base usado pela IA..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="chaveSTT"
+              >Chave da API de Transcrição (Whisper ou Google)</label
+            >
+            <input
+              type="text"
+              id="chaveSTT"
+              placeholder="Chave de API STT..."
+            />
+          </div>
+
+          <div class="form-actions">
+            <button type="submit">Salvar Configurações</button>
+          </div>
+        </form>
+      </main>
+    </div>
+
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      import { SUPABASE_URL, SUPABASE_KEY } from "./assets/js/env.js";
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) window.location.href = "login.html";
+
+      const { data: perfil } = await supabase
+        .from("usuarios")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (!perfil || perfil.role !== "admin") {
+        alert("Acesso restrito a administradores.");
+        window.location.href = "index.html";
+      }
+
+      // Carrega configs salvas
+      const { data: configExistente } = await supabase
+        .from("configuracoes")
+        .select("*")
+        .eq("criado_por", user.id)
+        .single();
+
+      if (configExistente) {
+        document.getElementById("corPrimaria").value =
+          configExistente.cor_primaria || "#1f1f2e";
+        document.getElementById("custoHora").value =
+          configExistente.custo_hora || "";
+        document.getElementById("promptPadrao").value =
+          configExistente.prompt_padrao || "";
+        document.getElementById("chaveSTT").value =
+          configExistente.chave_stt || "";
+      }
+
+      // Salvar configurações
+      document
+        .getElementById("form-config")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const corPrimaria = document.getElementById("corPrimaria").value;
+          const custoHora = parseFloat(
+            document.getElementById("custoHora").value
+          );
+          const promptPadrao = document.getElementById("promptPadrao").value;
+          const chaveSTT = document.getElementById("chaveSTT").value;
+
+          let logoUrl = configExistente?.logo_url;
+
+          // Upload da logo (se alterada)
+          // Upload da logo (se alterada)
+          const logoFile = document.getElementById("logoUpload").files[0];
+          if (logoFile) {
+            const { data, error } = await supabase.storage
+              .from("logos")
+              .upload(`logo-${user.id}.png`, logoFile, { upsert: true });
+
+            if (!error) {
+              const { data: urlData } = supabase.storage
+                .from("logos")
+                .getPublicUrl(`logo-${user.id}.png`);
+              logoUrl = urlData?.publicUrl;
+            }
+          }
+
+          const payload = {
+            cor_primaria: corPrimaria,
+            logo_url: logoUrl,
+            custo_hora: custoHora,
+            prompt_padrao: promptPadrao,
+            chave_stt: chaveSTT,
+            criado_por: user.id,
+          };
+
+          if (configExistente) {
+            await supabase
+              .from("configuracoes")
+              .update(payload)
+              .eq("criado_por", user.id);
+          } else {
+            await supabase.from("configuracoes").insert(payload);
+          }
+
+          alert("Configurações salvas com sucesso.");
+        });
+
+      document
+        .getElementById("btnLogout")
+        ?.addEventListener("click", async () => {
+          await supabase.auth.signOut();
+          window.location.href = "login.html";
+        });
+    </script>
+  </body>
+</html>

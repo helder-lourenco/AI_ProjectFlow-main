@@ -1,142 +1,200 @@
-🚀 AI ProjectFlow: A Revolução na Gestão de Projetos e Portfólio com Inteligência Artificial!
-✨ Cansado de Projetos que Fogem do Controle? Conheça o AI ProjectFlow!
-Imagine ter um assistente superinteligente que não apenas organiza seus projetos, mas também prevê desafios, otimiza sua equipe e maximiza seus resultados. O AI ProjectFlow é essa ferramenta! Ele transforma a complexidade da gestão de projetos em um processo intuitivo e estratégico, usando o poder da Inteligência Artificial para te guiar do início ao fim.
+# 🤖 AI ProjectFlow — Plataforma de Gestão Inteligente de Projetos
 
-Por que AI ProjectFlow é o Seu Próximo Grande Passo?
-Decisões Geniais: Deixe a IA te ajudar a classificar projetos, estimar prazos e custos com precisão surpreendente, e até prever o retorno financeiro.
+Bem-vindo ao **AI ProjectFlow**, a solução definitiva para transformar o gerenciamento de projetos com **inteligência artificial**, automações e uma experiência de usuário moderna e poderosa.
 
-Equipe no Ponto Certo: Encontre o talento ideal para cada tarefa e garanta que ninguém fique sobrecarregado, mantendo sua equipe produtiva e feliz.
+---
 
-Visão Clara como Cristal: Tenha dashboards e gráficos que mostram o status de cada projeto em tempo real, para que você sempre saiba onde está e para onde vai.
+## 🌟 O que é o AI ProjectFlow?
 
-Alerta Antecipado: Receba avisos inteligentes sobre possíveis atrasos ou problemas, permitindo que você aja antes que se tornem grandes dores de cabeça.
+O **AI ProjectFlow** é uma plataforma completa de **gestão de projetos e portfólio**, voltada para PMOs, equipes de desenvolvimento e gestores de inovação que buscam:
 
-Comunicação Sem Ruídos: Um sistema de mensagens integrado para manter todos na mesma página, sem esforço.
+- 📊 Organizar e priorizar projetos com clareza
+- 🧠 Utilizar IA para gerar escopos, esforços, prazos e frameworks automaticamente
+- 📅 Controlar o ciclo de vida do projeto com dashboards interativos
+- 🧑‍💻 Identificar o melhor desenvolvedor para cada projeto
+- 🎥 Transcrever reuniões e gerar planos com IA a partir do áudio
+- 📬 Enviar resumos e propostas aos participantes automaticamente
+- 🔒 Controlar o acesso por perfil (ADM, Dev, PO)
+- 🎨 Personalizar cores, logo e configurações de IA
 
-Sprints Perfeitas: Agende suas sprints de forma inteligente e receba relatórios automáticos que resumem o progresso, liberando seu tempo para o que realmente importa.
+---
 
-💡 O Que o AI ProjectFlow Faz Por Você?
-Acesso Seguro: Entre na plataforma com seu usuário e senha e tenha seus dados sempre protegidos.
+## 🚀 Principais Funcionalidades
 
-Projetos Classificados pela IA: Ao iniciar um novo projeto, nossa IA sugere a melhor categoria, economizando seu tempo e garantindo consistência.
+### 💼 Gestão de Projetos
 
-Ciclo de Vida do Projeto Completo: Acompanhe cada etapa, do planejamento à entrega, com estimativas de prazos e esforços baseadas em inteligência artificial.
+- Criação de novos projetos com descrição, valor, tecnologias
+- Geração automática de plano usando IA (Gemini/GPT)
+- Estimativas de custo, prazo e esforço baseadas em dados
 
-Alocação de Talentos Otimizada: Gerencie sua equipe, veja a carga de trabalho de cada um e receba sugestões da IA sobre quem é o melhor para cada projeto.
+### 📊 Dashboard Dinâmico
 
-Análise Financeira Inteligente: Tenha estimativas de custo, retorno potencial e tempo de retorno, para tomar decisões de investimento mais seguras.
+- Visualização clara de status: **No prazo**, **Atenção**, **Fora do prazo**
+- Gráficos de progresso e alertas por e-mail
 
-Sugestão de Framework de Desenvolvimento: A IA pode até indicar o framework tecnológico mais adequado para o seu projeto, considerando o impacto no negócio, urgência e valor.
+### 👤 Gestão de Usuários
 
-Agendamento de Sprints Simplificado: Planeje suas sprints com facilidade e, se desejar, deixe a IA otimizar a alocação de tarefas.
+- Acesso segmentado por perfil (admin, dev, po, etc.)
+- Tela administrativa para criação, edição e ativação de usuários
+- Pop-up com solicitações de acesso pendentes
 
-Relatórios de Sprint Automáticos: Receba resumos inteligentes do andamento de cada sprint, prontos para compartilhar.
+### 🧠 IA Personalizável
 
-Mensageria Integrada: Um chat direto na plataforma para comunicação rápida e eficiente com sua equipe.
+- Configuração de prompt padrão para geração de plano
+- Tela para cadastrar e testar novos prompts IA
+- Baseada em Gemini (Google) e suporte a OpenAI
 
-Gráficos que Falam: Visualize o progresso dos seus projetos e a carga de trabalho da equipe com gráficos intuitivos e fáceis de entender.
+### 📹 Transcrição de Reuniões
 
-💻 As Ferramentas por Trás da Mágia
-O AI ProjectFlow é construído com tecnologias modernas para garantir performance e escalabilidade:
+- Upload de gravações ou integração com Teams, Zoom ou Meet
+- Transcrição via STT (Whisper, Google STT)
+- Resumo da reunião + escopo do projeto sugerido com IA
 
-Frontend: React (para uma experiência de usuário fluida e dinâmica).
+### 🎨 Configuração do Sistema
 
-Estilização: Tailwind CSS (para um design moderno e responsivo).
+- Escolha de cor principal e logo
+- Custo-hora configurável para cálculos de projeto
+- Salvo por administrador na aba **Configurações**
 
-Banco de Dados: MongoDB (para armazenar seus dados de forma flexível e segura).
+---
 
-Backend: Node.js com Express.js e Mongoose (o cérebro por trás da aplicação, conectando tudo).
+## 🧑‍💻 Tecnologias Utilizadas
 
-Gráficos: Recharts (para visualizações de dados claras e impactantes).
+| Camada         | Tecnologias                              |
+| -------------- | ---------------------------------------- |
+| Front-end      | HTML, CSS, JS, Supabase JS SDK           |
+| Back-end       | Node.js + Express                        |
+| IA             | Gemini (Google), OpenAI, Whisper STT     |
+| Banco de dados | Supabase (PostgreSQL + Auth + Storage)   |
+| Transcrição    | API externa (Google STT, OpenAI Whisper) |
+| Design         | Material Icons + UI Clean Minimalista    |
+| Upload/Storage | Supabase Storage com buckets públicos    |
 
-Inteligência Artificial: Funções que simulam a integração com poderosos modelos de linguagem como o Gemini (pronto para uma integração real!).
+---
 
-🚀 Quer Ver o AI ProjectFlow em Ação?
-Para desenvolvedores e entusiastas que desejam explorar o código e configurar o projeto localmente:
+## 🗂️ Estrutura de Diretórios
 
-🗂 Estrutura de Pastas
-bash
-Copiar
-Editar
-project-portfolio-ai/
-├── backend/ # API principal Node.js
-├── ai-engine/ # Microserviço Python para IA
-├── frontend/ # HTML, CSS, gráficos e dashboards
-├── database/ # Scripts do Supabase (schema.sql)
-├── docs/ # Documentações de processo e métodos (PMO, 5W2H etc)
-└── docker-compose.yml
+```
+AI_ProjectFlow/
+├── backend/
+│   └── src/
+│       ├── app.js
+│       ├── routes/
+│       │   ├── iaRoutes.js
+│       │   ├── emailRoutes.js
+│       │   └── ...
+├── frontend/
+│   ├── index.html
+│   ├── login.html
+│   ├── novo-projeto.html
+│   ├── painel-admin.html
+│   ├── configuracoes.html
+│   ├── assets/
+│       ├── js/
+│       └── css/
+├── ia_service/
+│   ├── main.py
+│   └── ai/planner.py
+└── README.md
+```
 
-🛠 Tecnologias Utilizadas
-Camada Tecnologias
-Backend (API) Node.js, Express.js
-IA Engine Python, FastAPI, Gemini IA
-Front-end HTML5, CSS3, Chart.js
-Banco de Dados Supabase (PostgreSQL)
-Outros Docker, Nodemailer, dotenv
+---
 
-🚀 Como Rodar o Projeto (Em Desenvolvimento)
-Pré-requisitos:
-Node.js
+## ⚙️ Como Executar o Projeto
 
-Python 3.10+
+### 🔧 Pré-requisitos
 
-Docker (opcional, mas recomendado)
+- Node.js v18+
+- Python 3.10+
+- Conta no [Supabase](https://supabase.com)
+- API key Gemini (ou OpenAI opcional)
 
-Conta no Supabase
+---
 
-Passo a Passo
-bash
-Copiar
-Editar
+### 📦 1. Clone o projeto
 
-# Clone o repositório
+```bash
+git clone https://github.com/seuusuario/ai-projectflow.git
+cd ai-projectflow
+```
 
-git clone https://github.com/seuusuario/project-portfolio-ai.git
-cd project-portfolio-ai
+---
 
-# Instale as dependências do backend
+### 🔁 2. Backend (Node.js)
 
+```bash
 cd backend
 npm install
+node src/app.js
+```
 
-# Rode a API do Node.js
+---
 
-npm run dev
+### 💻 3. Frontend (HTML estático)
 
-# Em outro terminal, ative a IA
+```bash
+cd frontend
+npx live-server
+```
 
-cd ../ai-engine
+Acesse: [http://127.0.0.1:8080/login.html](http://127.0.0.1:8080/login.html)
+
+---
+
+### 🤖 4. Serviço de IA (opcional)
+
+```bash
+cd ia_service
 pip install -r requirements.txt
-uvicorn api:app --reload
+uvicorn main:app --reload --port 8000
+```
 
-# Acesse o frontend no navegador
+---
 
-cd ../frontend
+### 🧪 5. Ambiente `.env` (backend)
 
-# Abrir index.html direto ou rodar servidor leve como o Live Server do VSCode
+Crie um arquivo `backend/.env`:
 
-🧪 Próximas Etapas do Projeto
-Criar endpoints iniciais no Node.js
+```env
+SUPABASE_URL=https://xyz.supabase.co
+SUPABASE_KEY=public-anon-key
+SMTP_USER=seu-email@gmail.com
+SMTP_PASS=sua-senha-app
+```
 
-Conectar Supabase e testar autenticação
+---
 
-Expor IA Python com FastAPI (como no Colab)
+## 🧪 Tabelas Supabase
 
-Criar layout HTML/CSS moderno
+- ✅ `usuarios`
+- ✅ `configuracoes`
+- ✅ `reunioes`
+- ✅ `prompts_customizados`
 
-Implementar IA de alocação e planejamento
+```sql
+-- Execute no SQL Editor do Supabase (ver no README completo)
+```
 
-Gerar gráficos e alertas
+---
 
-💡 Referências
-Planejamento PMO
+## 🧠 Exemplo de Fluxo de IA com Reunião
 
-Frameworks: 5W2H, 80/20, Chicago UI
+1. Usuário grava reunião e envia o áudio
+2. Transcrição com API STT
+3. Texto é enviado para a IA (Gemini)
+4. IA gera resumo + escopo + tecnologias + estimativa
+5. Resultado é salvo na tela de reunião e notificado por e-mail
 
-IA Colab Exemplo: Google Colab Notebook
+---
 
-✉️ Contato
-Dúvidas ou sugestões? Abra uma issue ou entre em contato.
+## 🛠️ Equipe e Contribuição
 
-📄 Licença
-Este projeto está sob a licença [INSERIR A LICENÇA DO SEU PROJETO AQUI - Ex: MIT License]. Consulte o arquivo LICENSE para obter mais detalhes.
+Desenvolvido por 🚀 helder-lks
+
+Contribuições, feedbacks e forks são bem-vindos!
+
+---
+
+## 📄 Licença
+
+Este projeto é open-source sob licença MIT.

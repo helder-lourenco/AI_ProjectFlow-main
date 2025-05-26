@@ -13,6 +13,60 @@
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
+    <style>
+      .form-section {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 1em;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+
+      .checkbox-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .checkbox-group label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .form-actions {
+        margin-top: 20px;
+      }
+
+      .form-actions button {
+        background-color: #1f1f2e;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 1em;
+        cursor: pointer;
+      }
+    </style>
   </head>
   <body>
     <div class="container">
@@ -23,11 +77,19 @@
           <a href="index.html"
             ><span class="material-icons">dashboard</span>Dashboard</a
           >
-          <a href="#"
+          <a href="novo-projeto.html"
             ><span class="material-icons">add_circle</span>Novo Projeto</a
           >
-          <a href="#"><span class="material-icons">group</span>Equipe</a>
-          <a href="#"><span class="material-icons">logout</span>Logout</a>
+          <a href="painel-admin.html"
+            ><span class="material-icons">admin_panel_settings</span>Painel
+            Admin</a
+          >
+          <a href="analista.html"
+            ><span class="material-icons">description</span>Projetos</a
+          >
+          <a href="#" id="btnLogout"
+            ><span class="material-icons">logout</span>Logout</a
+          >
         </nav>
       </aside>
 
@@ -35,7 +97,7 @@
       <main class="main">
         <header class="main-header">
           <h1>Novo Projeto</h1>
-          <p>Preencha os dados abaixo para gerar o plano com IA</p>
+          <p>Preencha os dados para enviar ao sistema de IA</p>
         </header>
 
         <section class="form-section">
@@ -98,5 +160,90 @@
         </section>
       </main>
     </div>
+
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      import { SUPABASE_URL, SUPABASE_KEY } from "./assets/js/env.js";
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // Verifica se está logado
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+      if (!session || error) {
+        alert("Você precisa estar logado.");
+        window.location.href = "login.html";
+      }
+
+      // Logout
+      document
+        .getElementById("btnLogout")
+        ?.addEventListener("click", async () => {
+          await supabase.auth.signOut();
+          window.location.href = "login.html";
+        });
+
+      // Submeter formulário e chamar IA
+      document
+        .getElementById("form-projeto")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const titulo = document.getElementById("titulo").value;
+          const descricao = document.getElementById("descricao").value;
+          const prazo = document.getElementById("prazo").value;
+          const valorEstimado = parseFloat(
+            document.getElementById("valorEstimado").value
+          );
+          const metodologias = Array.from(
+            document.querySelectorAll('input[name="metodologias"]:checked')
+          ).map((cb) => cb.value);
+
+          // 🔍 1. Chamar a IA
+          const responseIA = await fetch(
+            "http://localhost:5000/api/ia/analisar",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                titulo,
+                descricao,
+                prazo,
+                valor_estimado: valorEstimado,
+                metodologias,
+              }),
+            }
+          );
+
+          const resultadoIA = await responseIA.json();
+          console.log("Resultado da IA:", resultadoIA);
+
+          alert("Plano gerado pela IA:\n\n" + resultadoIA.plano);
+
+          // 🔄 2. Salvar no Supabase (caso queira guardar)
+          const response = await fetch("http://localhost:5000/api/projetos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              titulo,
+              descricao,
+              prazo,
+              valorEstimado,
+              metodologias,
+              plano_ia: resultadoIA.plano, // opcional
+            }),
+          });
+
+          const resultado = await response.json();
+          if (response.ok) {
+            alert("Projeto criado com sucesso!");
+            window.location.href = "index.html";
+          } else {
+            alert("Erro ao salvar projeto: " + resultado.message);
+          }
+        });
+    </script>
   </body>
 </html>

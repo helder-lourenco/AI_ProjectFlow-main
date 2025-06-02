@@ -409,7 +409,25 @@
         });
 
         const ctx = document.getElementById("statusChart").getContext("2d");
-        if (window.statusChart instanceof Chart) window.statusChart.destroy();
+        if (window.statusChart) window.statusChart.destroy();
+
+        // Se não houver dados, mostra mensagem
+        const totalProjetos = Object.values(statusCount).reduce(
+          (a, b) => a + b,
+          0
+        );
+        if (totalProjetos === 0) {
+          ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+          ctx.font = "16px Arial";
+          ctx.fillStyle = "#888";
+          ctx.textAlign = "center";
+          ctx.fillText(
+            "Nenhum dado para exibir",
+            ctx.canvas.width / 2,
+            ctx.canvas.height / 2
+          );
+          return;
+        }
 
         window.statusChart = new Chart(ctx, {
           type: "pie",

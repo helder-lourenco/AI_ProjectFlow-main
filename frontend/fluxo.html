@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fluxo do Projeto</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- jsPlumb -->
+    <script src="https://cdn.jsdelivr.net/npm/@jsplumb/core@5.11.0/dist/js/jsplumb.core.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jsplumb/browser-ui@5.11.0/dist/js/jsplumb.browser-ui.umd.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@jsplumb/browser-ui@5.11.0/dist/css/jsplumb.css"
+    />
+
+    <style>
+      /* Estilos (adaptar do novo-projeto.html) */
+      body {
+        background-color: #f8f9fa;
+        display: flex;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        display: flex;
+        width: 100%;
+      }
+
+      .sidebar {
+        background-color: #343a40;
+        color: white;
+        width: 250px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+      }
+
+      .sidebar h2 {
+        color: #fff;
+        margin-bottom: 20px;
+      }
+
+      .sidebar a {
+        color: rgba(255, 255, 255, 0.8);
+        display: block;
+        padding: 10px;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.2s ease;
+      }
+
+      .sidebar a:hover {
+        color: #fff;
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .main {
+        flex: 1;
+        padding: 20px;
+      }
+
+      .main-header {
+        color: #343a40;
+        margin-bottom: 20px;
+      }
+
+      .form-section {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin: 0 auto;
+        max-width: 900px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        font-weight: 500;
+        margin-bottom: 5px;
+        color: #495057;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 1rem;
+        border-radius: 0.375rem;
+        border: 1px solid #ced4da;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        border-color: #80bdff;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      }
+
+      .form-actions {
+        margin-top: 20px;
+        text-align: right;
+      }
+
+      .form-actions button {
+        background-color: #007bff;
+        color: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0.25rem;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+      }
+
+      .form-actions button:hover {
+        background-color: #0056b3;
+      }
+
+      /* Estilos para a área do usuário no sidebar */
+      .user-info {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .user-info img {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #fff;
+        margin-bottom: 10px;
+      }
+
+      .user-info p {
+        margin: 0;
+        font-size: 1rem;
+        color: #fff;
+      }
+
+      /* Estilo para a barra horizontal */
+      .sidebar-divider {
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        margin: 15px 0;
+      }
+
+      /* Estilo para o botão de logout */
+      #btnLogout {
+        margin-top: auto;
+        font-size: 0.9rem;
+      }
+
+      /* Estilos para o criador de fluxo */
+      #fluxo-container {
+        position: relative;
+        width: 100%;
+        height: 500px;
+        border: 1px solid #ccc;
+      }
+
+      #palette {
+        position: relative;
+        top: 10px;
+        left: 10px;
+        background-color: #f0f0f0;
+        padding: 10px;
+        border: 1px solid #ccc;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 80px; /* Reduzido a largura */
+      }
+
+      .shape {
+        width: 60px; /* Reduzido a largura */
+        height: 30px; /* Reduzido a altura */
+        border-radius: 5px;
+        color: #333;
+        text-align: center;
+        cursor: grab;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem; /* Reduzido o tamanho da fonte */
+        border: 1px solid #666;
+        box-sizing: border-box; /* Adicionado */
+      }
+
+      .shape i {
+        font-size: 1rem; /* Reduzido o tamanho dos ícones */
+      }
+
+      /* Estilos para as formas */
+      .documento {
+        background-color: #f0f8ff;
+        border-left: 3px solid #4682b4; /* Reduzido a largura da borda */
+      }
+
+      .emissao-documento {
+        background-color: #e6e6fa;
+        border-left: 3px solid #7b68ee; /* Reduzido a largura da borda */
+      }
+
+      .documento-multiplo {
+        background-color: #f0fff0;
+        border-left: 3px solid #3cb371; /* Reduzido a largura da borda */
+      }
+
+      .processo {
+        background-color: #fffaf0;
+        border: 1px solid #d26911;
+      }
+
+      .preparacao {
+        background-color: #fff0f5;
+        border: 1px solid #db7093;
+      }
+
+      .decisao {
+        background-color: #ffffe0;
+        border: 1px solid #ffd700;
+      }
+
+      .atraso {
+        background-color: #fff5ee;
+        border: 1px solid #a0522d;
+      }
+
+      .armazenamento {
+        background-color: #f5fffa;
+        border-top: 2px solid #008080; /* Reduzido a largura da borda */
+        border-bottom: 2px solid #008080; /* Reduzido a largura da borda */
+      }
+
+      .arquivamento {
+        background-color: #f8f8ff;
+        border-bottom: 2px solid #483d8b; /* Reduzido a largura da borda */
+      }
+
+      .conector {
+        background-color: #f5f5f5;
+        border-radius: 50%;
+      }
+
+      .seta {
+        background-color: #faf0e6;
+        border-right: 2px solid #8b4513; /* Reduzido a largura da borda */
+      }
+
+      .inicio-fim {
+        background-color: #faebd7;
+        border-radius: 10px; /* Reduzido o raio da borda */
+      }
+
+      #diagram {
+        position: absolute;
+        top: 10px;
+        left: 90px; /* Aumentado para compensar a largura da paleta */
+        width: calc(
+          100% - 100px
+        ); /* Ajustado para compensar a largura da paleta */
+        height: 480px;
+        border: 1px dashed #ccc;
+      }
+
+      /* Estilos para os botões de tipo de conexão */
+      .connection-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-top: 5px;
+      }
+
+      .connection-buttons button {
+        padding: 3px 5px; /* Reduzido o preenchimento */
+        font-size: 0.6rem; /* Reduzido o tamanho da fonte */
+        width: 100%;
+        border-radius: 10px; /* Reduzido o raio da borda */
+        border: none;
+        color: white;
+      }
+
+      #btnConexaoDireta {
+        background-color: #4caf50;
+      }
+
+      #btnConexaoIndireta {
+        background-color: #2196f3;
+      }
+
+      /* Estilo para o botão Criar com IA */
+      #btnCriarComIA {
+        margin-top: 5px; /* Reduzido o espaçamento */
+        width: 100%;
+        font-size: 0.6rem; /* Reduzido o tamanho da fonte */
+      }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/umd/supabase.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <!-- Informações do Usuário -->
+        <div class="user-info">
+          <img src="assets/img/user.png" alt="Foto do Usuário" />
+          <p id="nomeUsuario">Carregando...</p>
+          <p id="emailUsuario">Carregando...</p>
+        </div>
+
+        <!-- Barra Horizontal -->
+        <div class="sidebar-divider"></div>
+
+        <!-- Navegação -->
+        <nav>
+          <a href="index.html">
+            <span class="material-icons">dashboard</span>Dashboard
+          </a>
+          <a href="novo-projeto.html">
+            <span class="material-icons">add_circle</span>Novo Projeto
+          </a>
+          <a href="painel-admin.html">
+            <span class="material-icons">admin_panel_settings</span>Painel Admin
+          </a>
+          <a href="analista.html">
+            <span class="material-icons">description</span>Projetos
+          </a>
+          <a href="configuracoes.html">
+            <span class="material-icons">settings</span>Configuração
+          </a>
+        </nav>
+
+        <!-- Botão de Logout -->
+        <a href="#" id="btnLogout">
+          <span class="material-icons">logout</span>Logout
+        </a>
+      </aside>
+
+      <!-- Conteúdo Principal -->
+      <main class="main">
+        <header class="main-header">
+          <h1>Fluxo do Projeto</h1>
+          <p>Crie o fluxo do projeto e preencha os detalhes adicionais</p>
+        </header>
+
+        <section class="form-section">
+          <!-- Criador de Fluxo -->
+          <div id="fluxo-container">
+            <!-- Paleta de Formas -->
+            <div id="palette">
+              <div class="shape documento" data-shape="documento">
+                <i class="bi bi-file-earmark-text"></i>
+              </div>
+              <div
+                class="shape emissao-documento"
+                data-shape="emissao-documento"
+              >
+                <i class="bi bi-file-earmark-arrow-up"></i>
+              </div>
+              <div
+                class="shape documento-multiplo"
+                data-shape="documento-multiplo"
+              >
+                <i class="bi bi-files"></i>
+              </div>
+              <div class="shape processo" data-shape="processo">
+                <i class="bi bi-gear"></i>
+              </div>
+              <div class="shape preparacao" data-shape="preparacao">
+                <i class="bi bi-pencil-square"></i>
+              </div>
+              <div class="shape decisao" data-shape="decisao">
+                <i class="bi bi-question-diamond"></i>
+              </div>
+              <div class="shape armazenamento" data-shape="armazenamento">
+                <i class="bi bi-hdd-rack"></i>
+              </div>
+              <div class="shape arquivamento" data-shape="arquivamento">
+                <i class="bi bi-archive"></i>
+              </div>
+              <div class="shape inicio-fim" data-shape="inicio-fim">
+                <i class="bi bi-flag"></i>
+              </div>
+
+              <!-- Botões de Tipo de Conexão -->
+              <div class="connection-buttons">
+                <button
+                  type="button"
+                  id="btnConexaoDireta"
+                  class="btn btn-outline-primary btn-sm"
+                >
+                  <i class="bi bi-arrow-right"></i> Direta
+                </button>
+                <button
+                  type="button"
+                  id="btnConexaoIndireta"
+                  class="btn btn-outline-secondary btn-sm"
+                >
+                  <i class="bi bi-arrow-right-short"></i> Indireta
+                </button>
+              </div>
+
+              <!-- Botão Criar com IA -->
+              <button
+                type="button"
+                id="btnCriarComIA"
+                class="btn btn-info btn-sm"
+              >
+                Criar com IA
+              </button>
+            </div>
+            <!-- Área de Diagrama -->
+            <div id="diagram"></div>
+          </div>
+
+          <!-- Campos Excluídos do Formulário de Projeto -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>O projeto usará banco de dados?</label>
+                <select
+                  id="usaBanco"
+                  name="usaBanco"
+                  class="form-select"
+                  required
+                >
+                  <option value="">Selecione</option>
+                  <option value="sim">Sim</option>
+                  <option value="nao">Não</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Tipo de banco de dados</label>
+                <select id="tipoBanco" name="tipoBanco" class="form-select">
+                  <option value="">Selecione</option>
+                  <option value="sql">SQL</option>
+                  <option value="nosql">NoSQL</option>
+                  <option value="ambos">Ambos</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Quantidade de telas (aproximado)</label>
+                <input
+                  type="number"
+                  id="qtdTelas"
+                  name="qtdTelas"
+                  min="1"
+                  class="form-control"
+                />
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Terá tela de login?</label>
+                <select
+                  id="temLogin"
+                  name="temLogin"
+                  class="form-select"
+                  required
+                >
+                  <option value="">Selecione</option>
+                  <option value="sim">Sim</option>
+                  <option value="nao">Não</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Tipo de desenvolvimento</label>
+                <select
+                  id="tipoDev"
+                  name="tipoDev"
+                  class="form-select"
+                  required
+                >
+                  <option value="">Selecione</option>
+                  <option value="lowcode">Low Code</option>
+                  <option value="hardcode">Hard Code</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Framework de Projeto</label>
+                <select
+                  id="frameworkProjeto"
+                  name="frameworkProjeto"
+                  class="form-select"
+                >
+                  <option value="">Sugestão da IA</option>
+                  <option value="PMBOK">PMBOK</option>
+                  <option value="Scrum">Scrum</option>
+                  <option value="Kanban">Kanban</option>
+                  <option value="XP">XP</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Framework de Desenvolvimento</label>
+                <select
+                  id="frameworkDev"
+                  name="frameworkDev"
+                  class="form-select"
+                >
+                  <option value="">Sugestão da IA</option>
+                  <option value="React">React</option>
+                  <option value="Angular">Angular</option>
+                  <option value="Vue">Vue</option>
+                  <option value="Django">Django</option>
+                  <option value="Spring">Spring</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Framework de Testes</label>
+                <select
+                  id="frameworkTestes"
+                  name="frameworkTestes"
+                  class="form-select"
+                >
+                  <option value="">Sugestão da IA</option>
+                  <option value="Jest">Jest</option>
+                  <option value="Cypress">Cypress</option>
+                  <option value="Selenium">Selenium</option>
+                  <option value="JUnit">JUnit</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botões -->
+          <div class="form-actions">
+            <button type="button" id="btnSalvar" class="btn btn-success">
+              <i class="bi bi-save me-2"></i>
+              Salvar
+            </button>
+            <button type="button" id="btnExcluir" class="btn btn-danger">
+              <i class="bi bi-trash me-2"></i>
+              Excluir
+            </button>
+            <button type="button" id="btnVoltar" class="btn btn-secondary">
+              <i class="bi bi-arrow-left me-2"></i>
+              Voltar
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Pop-up para Criar com IA -->
+    <div
+      class="modal fade"
+      id="modalCriarComIA"
+      tabindex="-1"
+      aria-labelledby="modalCriarComIALabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalCriarComIALabel">
+              Criar Fluxo com IA
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Fechar"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="fluxoTexto">
+                Digite o fluxo do projeto
+                <span
+                  class="material-icons"
+                  style="cursor: pointer"
+                  title="Digite o processo do início ao fim que a IA irá gerar o fluxograma."
+                  >info</span
+                >
+              </label>
+              <textarea
+                class="form-control"
+                id="fluxoTexto"
+                rows="5"
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="btnSalvarIA" class="btn btn-success">
+              Salvar
+            </button>
+            <button type="button" id="btnExcluirIA" class="btn btn-danger">
+              Excluir
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Voltar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      import { SUPABASE_URL, SUPABASE_KEY } from "./assets/js/env.js";
+      import { jsPlumb } from "https://cdn.jsdelivr.net/npm/@jsplumb/core@5.11.0/dist/js/jsplumb.core.umd.min.js";
+      import { BrowserUI } from "https://cdn.jsdelivr.net/npm/@jsplumb/browser-ui@5.11.0/dist/js/jsplumb.browser-ui.umd.min.js";
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // Verifica se está logado
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+      if (!session || error) {
+        alert("Você precisa estar logado.");
+        window.location.href = "login.html";
+      }
+
+      // Logout
+      document
+        .getElementById("btnLogout")
+        ?.addEventListener("click", async () => {
+          await supabase.auth.signOut();
+          window.location.href = "login.html";
+        });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const plumb = jsPlumb.newInstance({
+          container: document.getElementById("diagram"),
+          dragOptions: {
+            cursor: "pointer",
+            zIndex: 2000,
+          },
+          connector: {
+            type: "Bezier",
+            options: {
+              stub: [40, 40],
+              gap: 10,
+              cornerRadius: 5,
+              alwaysRespectStubs: true,
+            },
+          },
+          endpoint: ["Dot", { radius: 5 }],
+          paintStyle: { stroke: "#666" },
+          hoverPaintStyle: { stroke: "#000" },
+          endpointStyle: { fill: "#666" },
+          endpointHoverStyle: { fill: "#000" },
+        });
+
+        // Torna as formas arrastáveis
+        const shapes = document.querySelectorAll("#palette .shape");
+        shapes.forEach((shape) => {
+          shape.addEventListener("dragstart", (e) => {
+            e.dataTransfer.setData("shape", shape.dataset.shape);
+            e.dataTransfer.effectAllowed = "move"; // Adicionado
+          });
+          shape.setAttribute("draggable", "true");
+        });
+
+        // Permite soltar as formas no diagrama
+        const diagram = document.getElementById("diagram");
+        diagram.addEventListener("dragover", (e) => {
+          e.preventDefault();
+        });
+        diagram.addEventListener("drop", (e) => {
+          e.preventDefault(); // Adicionado
+          const shapeType = e.dataTransfer.getData("shape");
+          if (shapeType) {
+            const newShape = document.createElement("div");
+            newShape.className = "shape";
+            newShape.classList.add(shapeType); // Adiciona a classe da forma
+            newShape.dataset.shape = shapeType;
+            newShape.style.position = "absolute";
+            newShape.style.left = `${e.offsetX}px`;
+            newShape.style.top = `${e.offsetY}px`;
+            newShape.style.width = "120px"; // Aumentado
+            newShape.style.height = "60px"; // Aumentado
+            newShape.style.textAlign = "center";
+            newShape.style.cursor = "pointer";
+
+            // Adiciona um campo de texto para o nome
+            const nameInput = document.createElement("input");
+            nameInput.type = "text";
+            nameInput.placeholder = "Nome";
+            nameInput.style.width = "80%";
+            nameInput.style.textAlign = "center";
+            newShape.appendChild(nameInput);
+
+            // Adiciona o ícone de lápis para o comentário
+            const commentIcon = document.createElement("span");
+            commentIcon.className = "material-icons";
+            commentIcon.textContent = "edit";
+            commentIcon.style.position = "absolute";
+            commentIcon.style.top = "5px";
+            commentIcon.style.right = "5px";
+            commentIcon.style.cursor = "pointer";
+            newShape.appendChild(commentIcon);
+
+            diagram.appendChild(newShape);
+
+            plumb.manage(newShape);
+            plumb.draggable(newShape);
+
+            // Torna o elemento uma fonte de conexão
+            plumb.addEndpoint(newShape, {
+              anchors: "Continuous",
+              isSource: true,
+              connector: {
+                type: "Bezier",
+                options: {
+                  stub: [40, 40],
+                  gap: 10,
+                  cornerRadius: 5,
+                  alwaysRespectStubs: true,
+                },
+              },
+              connectorStyle: { stroke: "#666", strokeWidth: 2 },
+              maxConnections: -1,
+            });
+
+            // Torna o elemento um destino de conexão
+            plumb.addEndpoint(newShape, {
+              anchors: "Continuous",
+              isTarget: true,
+              maxConnections: -1,
+            });
+          }
+        });
+
+        let connectionType = "direct"; // Tipo de conexão padrão
+
+        document
+          .getElementById("btnConexaoDireta")
+          .addEventListener("click", () => {
+            connectionType = "direct";
+            alert("Tipo de conexão: Direta");
+          });
+
+        document
+          .getElementById("btnConexaoIndireta")
+          .addEventListener("click", () => {
+            connectionType = "indirect";
+            alert("Tipo de conexão: Indireta");
+          });
+
+        // Abre o pop-up para criar com IA
+        document
+          .getElementById("btnCriarComIA")
+          .addEventListener("click", () => {
+            const modal = new bootstrap.Modal(
+              document.getElementById("modalCriarComIA")
+            );
+            modal.show();
+          });
+
+        // Lógica dos botões do pop-up
+        document.getElementById("btnSalvarIA").addEventListener("click", () => {
+          const fluxoTexto = document.getElementById("fluxoTexto").value;
+          // Chamar a IA para gerar o fluxograma com base no texto
+          alert("Chamar a IA para gerar o fluxograma:\n" + fluxoTexto);
+          document.getElementById("fluxoTexto").value = ""; // Limpa o texto
+          const modal = bootstrap.Modal.getInstance(
+            document.getElementById("modalCriarComIA")
+          );
+          modal.hide(); // Fecha o pop-up
+        });
+
+        document
+          .getElementById("btnExcluirIA")
+          .addEventListener("click", () => {
+            document.getElementById("fluxoTexto").value = ""; // Limpa o texto
+          });
+
+        // Lógica dos botões
+        document.getElementById("btnSalvar").addEventListener("click", () => {
+          // Salvar no Supabase e voltar para a tela de projeto
+          alert("Salvar");
+        });
+
+        document.getElementById("btnExcluir").addEventListener("click", () => {
+          // Mostrar pop-up de confirmação e excluir o fluxo
+          if (confirm("Tem certeza que deseja excluir o fluxo?")) {
+            alert("Excluir");
+          }
+        });
+
+        document.getElementById("btnVoltar").addEventListener("click", () => {
+          // Mostrar pop-up perguntando se quer excluir ou salvar como rascunho
+          const escolha = confirm(
+            "Deseja salvar como rascunho antes de voltar?"
+          );
+          if (escolha) {
+            alert("Salvar como rascunho");
+            // Guardar em cache (localStorage ou sessionStorage)
+          } else {
+            alert("Excluir alterações");
+          }
+          window.location.href = "novo-projeto.html";
+        });
+      });
+    </script>
+  </body>
+</html>
